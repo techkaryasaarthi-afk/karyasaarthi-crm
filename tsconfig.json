@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2021",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "baseUrl": "./backend",
+    "paths": {
+      "*": ["node_modules/*", "src/*"]
+    }
+  },
+  "include": [
+    "backend/src/**/*",
+    "backend/prisma/**/*"
+  ],
+  "exclude": [
+    "backend/node_modules",
+    "backend/dist",
+    "frontend"
+  ]
+}

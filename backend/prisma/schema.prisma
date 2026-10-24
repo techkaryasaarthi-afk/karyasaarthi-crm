@@ -3,40 +3,87 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
-enum PersonType { LEAD CLIENT VENDOR APPLICANT STAFF }
-enum Surface { SITE_COM SITE_IN APP CAREER WHATSAPP EMAIL CALL }
-enum InteractionType { FORM CHAT APPLICATION CALL_LOG }
-enum ProjectStage { SCOPING IN_PROGRESS REVIEW DELIVERED }
-enum ProjectStatus { ACTIVE DELIVERED ON_HOLD }
-enum AppStage { APPLIED SCREENED INTERVIEW OFFER REJECTED }
-enum Role { ADMIN MANAGER SALES VENDOR VIEWER }
+enum PersonType {
+  LEAD
+  CLIENT
+  VENDOR
+  APPLICANT
+  STAFF
+}
+
+enum Surface {
+  SITE_COM
+  SITE_IN
+  APP
+  CAREER
+  WHATSAPP
+  EMAIL
+  CALL
+}
+
+enum InteractionType {
+  FORM
+  CHAT
+  APPLICATION
+  CALL_LOG
+}
+
+enum ProjectStage {
+  SCOPING
+  IN_PROGRESS
+  REVIEW
+  DELIVERED
+}
+
+enum ProjectStatus {
+  ACTIVE
+  DELIVERED
+  ON_HOLD
+}
+
+enum AppStage {
+  APPLIED
+  SCREENED
+  INTERVIEW
+  OFFER
+  REJECTED
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  SALES
+  VENDOR
+  VIEWER
+}
 
 model Person {
-  id               String       @id @default(uuid())
+  id               String        @id @default(uuid())
   fullName         String
-  email            String?      @unique
-  phone            String?      @unique
-  type             PersonType   @default(LEAD)
+  email            String?       @unique
+  phone            String?       @unique
+  type             PersonType    @default(LEAD)
   firstTouchSource Surface
-  consentFlags     Json         @default("{}")
-  createdAt        DateTime     @default(now())
+  consentFlags     Json          @default("{}")
+  createdAt        DateTime      @default(now())
   interactions     Interaction[]
-  clientProjects   Project[]    @relation("ClientProjects")
-  vendorProjects   Project[]    @relation("VendorProjects")
+  clientProjects   Project[]     @relation("ClientProjects")
+  vendorProjects   Project[]     @relation("VendorProjects")
   applications     Application[]
 }
 
 model Staff {
-  id           String       @id @default(uuid())
-  email        String       @unique
+  id           String        @id @default(uuid())
+  email        String        @unique
   name         String
   passwordHash String
-  role         Role         @default(SALES)
-  active       Boolean      @default(true)
+  role         Role          @default(SALES)
+  active       Boolean       @default(true)
   interactions Interaction[]
   reviews      Application[]
 }
@@ -51,20 +98,21 @@ model Interaction {
   ownerId    String?
   owner      Staff?          @relation(fields: [ownerId], references: [id])
   occurredAt DateTime        @default(now())
+
   @@index([personId, occurredAt])
 }
 
 model Project {
-  id            String       @id @default(uuid())
+  id            String        @id @default(uuid())
   clientId      String
-  client        Person       @relation("ClientProjects", fields: [clientId], references: [id])
+  client        Person        @relation("ClientProjects", fields: [clientId], references: [id])
   vendorId      String?
-  vendor        Person?      @relation("VendorProjects", fields: [vendorId], references: [id])
+  vendor        Person?       @relation("VendorProjects", fields: [vendorId], references: [id])
   serviceType   String
-  stage         ProjectStage @default(SCOPING)
+  stage         ProjectStage  @default(SCOPING)
   status        ProjectStatus @default(ACTIVE)
   sourceSurface Surface
-  createdAt     DateTime     @default(now())
+  createdAt     DateTime      @default(now())
 }
 
 model JobPosting {
@@ -75,15 +123,15 @@ model JobPosting {
 }
 
 model Application {
-  id         String      @id @default(uuid())
+  id         String     @id @default(uuid())
   personId   String
-  person     Person      @relation(fields: [personId], references: [id])
+  person     Person     @relation(fields: [personId], references: [id])
   roleId     String
-  role       JobPosting  @relation(fields: [roleId], references: [id])
-  stage      AppStage    @default(APPLIED)
+  role       JobPosting @relation(fields: [roleId], references: [id])
+  stage      AppStage   @default(APPLIED)
   resumeUrl  String?
   reviewerId String?
-  reviewer   Staff?      @relation(fields: [reviewerId], references: [id])
+  reviewer   Staff?     @relation(fields: [reviewerId], references: [id])
 }
 
 model AuditLog {
