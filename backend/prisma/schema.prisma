@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum PersonType { LEAD CLIENT VENDOR APPLICANT STAFF }
+enum Surface { SITE_COM SITE_IN APP CAREER WHATSAPP EMAIL CALL }
+enum InteractionType { FORM CHAT APPLICATION CALL_LOG }
+enum ProjectStage { SCOPING IN_PROGRESS REVIEW DELIVERED }
+enum ProjectStatus { ACTIVE DELIVERED ON_HOLD }
+enum AppStage { APPLIED SCREENED INTERVIEW OFFER REJECTED }
+enum Role { ADMIN MANAGER SALES VENDOR VIEWER }
+
+model Person {
+  id               String       @id @default(uuid())
+  fullName         String
+  email            String?      @unique
+  phone            String?      @unique
+  type             PersonType   @default(LEAD)
+  firstTouchSource Surface
+  consentFlags     Json         @default("{}")
+  createdAt        DateTime     @default(now())
+  interactions     Interaction[]
+  clientProjects   Project[]    @relation("ClientProjects")
+  vendorProjects   Project[]    @relation("VendorProjects")
+  applications     Application[]
+}
+
+model Staff {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  name         String
+  passwordHash String
+  role         Role         @default(SALES)
+  active       Boolean      @default(true)
+  interactions Interaction[]
+  reviews      Application[]
+}
+
+model Interaction {
+  id         String          @id @default(uuid())
+  personId   String
+  person     Person          @relation(fields: [personId], references: [id])
+  channel    Surface
+  type       InteractionType
+  payload    Json
+  ownerId    String?
+  owner      Staff?          @relation(fields: [ownerId], references: [id])
+  occurredAt DateTime        @default(now())
+  @@index([personId, occurredAt])
+}
+
+model Project {
+  id            String       @id @default(uuid())
+  clientId      String
+  client        Person       @relation("ClientProjects", fields: [clientId], references: [id])
+  vendorId      String?
+  vendor        Person?      @relation("VendorProjects", fields: [vendorId], references: [id])
+  serviceType   String
+  stage         ProjectStage @default(SCOPING)
+  status        ProjectStatus @default(ACTIVE)
+  sourceSurface Surface
+  createdAt     DateTime     @default(now())
+}
+
+model JobPosting {
+  id           String        @id @default(uuid())
+  title        String
+  open         Boolean       @default(true)
+  applications Application[]
+}
+
+model Application {
+  id         String      @id @default(uuid())
+  personId   String
+  person     Person      @relation(fields: [personId], references: [id])
+  roleId     String
+  role       JobPosting  @relation(fields: [roleId], references: [id])
+  stage      AppStage    @default(APPLIED)
+  resumeUrl  String?
+  reviewerId String?
+  reviewer   Staff?      @relation(fields: [reviewerId], references: [id])
+}
+
+model AuditLog {
+  id       String   @id @default(uuid())
+  actorId  String?
+  action   String
+  entity   String
+  entityId String
+  diff     Json?
+  at       DateTime @default(now())
+}
