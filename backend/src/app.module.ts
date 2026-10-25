@@ -7,6 +7,10 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersRbacModule } from './modules/users-rbac/users-rbac.module';
+import { PersonsModule } from './modules/persons/persons.module';
+import { InteractionsModule } from './modules/interactions/interactions.module';
+import { PublicApiModule } from './modules/public-api/public-api.module';
+import { AiModule } from './modules/ai/ai.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -18,6 +22,10 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     PrismaModule,
     AuthModule,
     UsersRbacModule,
+    PersonsModule,
+    InteractionsModule,
+    PublicApiModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [
