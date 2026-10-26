@@ -62,30 +62,65 @@ enum Role {
   VIEWER
 }
 
+enum LeadStage {
+  NEW
+  CONTACTED
+  QUALIFIED
+  PROPOSAL_SENT
+  WON
+  LOST
+}
+
+enum LeadUrgency {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum ConversationStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  SNOOZED
+}
+
+enum SenderType {
+  CUSTOMER
+  STAFF
+  AI
+  SYSTEM
+}
+
 model Person {
-  id               String        @id @default(uuid())
+  id               String         @id @default(uuid())
   fullName         String
-  email            String?       @unique
-  phone            String?       @unique
-  type             PersonType    @default(LEAD)
+  email            String?        @unique
+  phone            String?        @unique
+  type             PersonType     @default(LEAD)
   firstTouchSource Surface
-  consentFlags     Json          @default("{}")
-  createdAt        DateTime      @default(now())
+  consentFlags     Json           @default("{}")
+  createdAt        DateTime       @default(now())
   interactions     Interaction[]
-  clientProjects   Project[]     @relation("ClientProjects")
-  vendorProjects   Project[]     @relation("VendorProjects")
+  clientProjects   Project[]      @relation("ClientProjects")
+  vendorProjects   Project[]      @relation("VendorProjects")
   applications     Application[]
+  leads            Lead[]
+  conversations    Conversation[]
 }
 
 model Staff {
-  id           String        @id @default(uuid())
-  email        String        @unique
-  name         String
-  passwordHash String
-  role         Role          @default(SALES)
-  active       Boolean       @default(true)
-  interactions Interaction[]
-  reviews      Application[]
+  id                    String         @id @default(uuid())
+  email                 String         @unique
+  name                  String
+  passwordHash          String
+  role                  Role           @default(SALES)
+  active                Boolean        @default(true)
+  interactions          Interaction[]
+  reviews               Application[]
+  assignedLeads         Lead[]
+  leadTasks             LeadTask[]
+  assignedConversations Conversation[]
+  messagesSent          ChatMessage[]
 }
 
 model Interaction {
@@ -100,6 +135,84 @@ model Interaction {
   occurredAt DateTime        @default(now())
 
   @@index([personId, occurredAt])
+}
+
+model Lead {
+  id              String      @id @default(uuid())
+  personId        String
+  person          Person      @relation(fields: [personId], references: [id])
+  title           String
+  stage           LeadStage   @default(NEW)
+  score           Int         @default(50)
+  urgency         LeadUrgency @default(MEDIUM)
+  estimatedValue  Float?
+  serviceType     String?
+  sourceSurface   Surface
+  assignedStaffId String?
+  assignedStaff   Staff?      @relation(fields: [assignedStaffId], references: [id])
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  tasks           LeadTask[]
+
+  @@index([stage, score])
+  @@index([assignedStaffId])
+}
+
+model LeadTask {
+  id              String    @id @default(uuid())
+  leadId          String
+  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  assignedStaffId String?
+  assignedStaff   Staff?    @relation(fields: [assignedStaffId], references: [id])
+  title           String
+  dueAt           DateTime
+  completed       Boolean   @default(false)
+  createdAt       DateTime  @default(now())
+}
+
+model Conversation {
+  id                String             @id @default(uuid())
+  personId          String
+  person            Person             @relation(fields: [personId], references: [id])
+  channel           Surface
+  status            ConversationStatus @default(OPEN)
+  assignedStaffId   String?
+  assignedStaff     Staff?             @relation(fields: [assignedStaffId], references: [id])
+  lastMessageAt     DateTime           @default(now())
+  slaDueAt          DateTime?
+  firstRespondedAt  DateTime?
+  createdAt         DateTime           @default(now())
+  messages          ChatMessage[]
+
+  @@index([status, channel])
+  @@index([assignedStaffId])
+}
+
+model ChatMessage {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderType     SenderType
+  senderStaffId  String?
+  senderStaff    Staff?       @relation(fields: [senderStaffId], references: [id])
+  content        String
+  isInternalNote Boolean      @default(false)
+  channel        Surface
+  attachments    Json         @default("[]")
+  readAt         DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@index([conversationId, createdAt])
+}
+
+model CannedReply {
+  id        String   @id @default(uuid())
+  shortcut  String   @unique
+  title     String
+  content   String
+  category  String?
+  createdAt DateTime @default(now())
 }
 
 model Project {

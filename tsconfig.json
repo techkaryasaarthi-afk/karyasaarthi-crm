@@ -8,16 +8,14 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "baseUrl": "./backend",
-    "paths": {
-      "*": ["node_modules/*", "src/*"]
-    }
+    "baseUrl": "./backend"
   },
   "include": [
     "backend/src/**/*",
     "backend/prisma/**/*"
   ],
   "exclude": [
+    "node_modules",
     "backend/node_modules",
     "backend/dist",
     "frontend"

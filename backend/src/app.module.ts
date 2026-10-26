@@ -11,6 +11,8 @@ import { PersonsModule } from './modules/persons/persons.module';
 import { InteractionsModule } from './modules/interactions/interactions.module';
 import { PublicApiModule } from './modules/public-api/public-api.module';
 import { AiModule } from './modules/ai/ai.module';
+import { LeadsModule } from './modules/leads/leads.module';
+import { InboxModule } from './modules/inbox/inbox.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -26,6 +28,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     InteractionsModule,
     PublicApiModule,
     AiModule,
+    LeadsModule,
+    InboxModule,
   ],
   controllers: [AppController],
   providers: [
