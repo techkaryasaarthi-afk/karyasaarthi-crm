@@ -46,6 +46,34 @@ enum ProjectStatus {
   ON_HOLD
 }
 
+enum MilestoneStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  DELAYED
+}
+
+enum DeliverableStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum RevisionStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  DECLINED
+}
+
+enum PayoutStatus {
+  PENDING
+  APPROVED
+  RELEASED
+  HELD
+}
+
 enum AppStage {
   APPLIED
   SCREENED
@@ -92,20 +120,21 @@ enum SenderType {
 }
 
 model Person {
-  id               String         @id @default(uuid())
+  id               String          @id @default(uuid())
   fullName         String
-  email            String?        @unique
-  phone            String?        @unique
-  type             PersonType     @default(LEAD)
+  email            String?         @unique
+  phone            String?         @unique
+  type             PersonType      @default(LEAD)
   firstTouchSource Surface
-  consentFlags     Json           @default("{}")
-  createdAt        DateTime       @default(now())
+  consentFlags     Json            @default("{}")
+  createdAt        DateTime        @default(now())
   interactions     Interaction[]
-  clientProjects   Project[]      @relation("ClientProjects")
-  vendorProjects   Project[]      @relation("VendorProjects")
+  clientProjects   Project[]       @relation("ClientProjects")
+  vendorProjects   Project[]       @relation("VendorProjects")
   applications     Application[]
   leads            Lead[]
   conversations    Conversation[]
+  vendorProfile    VendorProfile?
 }
 
 model Staff {
@@ -160,15 +189,15 @@ model Lead {
 }
 
 model LeadTask {
-  id              String    @id @default(uuid())
+  id              String   @id @default(uuid())
   leadId          String
-  lead            Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  lead            Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
   assignedStaffId String?
-  assignedStaff   Staff?    @relation(fields: [assignedStaffId], references: [id])
+  assignedStaff   Staff?   @relation(fields: [assignedStaffId], references: [id])
   title           String
   dueAt           DateTime
-  completed       Boolean   @default(false)
-  createdAt       DateTime  @default(now())
+  completed       Boolean  @default(false)
+  createdAt       DateTime @default(now())
 }
 
 model Conversation {
@@ -216,16 +245,91 @@ model CannedReply {
 }
 
 model Project {
-  id            String        @id @default(uuid())
+  id            String              @id @default(uuid())
   clientId      String
-  client        Person        @relation("ClientProjects", fields: [clientId], references: [id])
+  client        Person              @relation("ClientProjects", fields: [clientId], references: [id])
   vendorId      String?
-  vendor        Person?       @relation("VendorProjects", fields: [vendorId], references: [id])
+  vendor        Person?             @relation("VendorProjects", fields: [vendorId], references: [id])
+  title         String              @default("Client Project")
+  description   String?
   serviceType   String
-  stage         ProjectStage  @default(SCOPING)
-  status        ProjectStatus @default(ACTIVE)
+  stage         ProjectStage        @default(SCOPING)
+  status        ProjectStatus       @default(ACTIVE)
+  budget        Float?
+  currency      String              @default("INR")
+  deadline      DateTime?
   sourceSurface Surface
-  createdAt     DateTime      @default(now())
+  createdAt     DateTime            @default(now())
+  milestones    ProjectMilestone[]
+  deliverables  ProjectDeliverable[]
+  revisions     RevisionRequest[]
+  payouts       VendorPayout[]
+
+  @@index([stage, status])
+}
+
+model ProjectMilestone {
+  id          String          @id @default(uuid())
+  projectId   String
+  project     Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  status      MilestoneStatus @default(PENDING)
+  dueDate     DateTime?
+  completedAt DateTime?
+  amount      Float?
+  createdAt   DateTime        @default(now())
+}
+
+model ProjectDeliverable {
+  id          String            @id @default(uuid())
+  projectId   String
+  project     Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title       String
+  fileUrl     String?
+  version     Int               @default(1)
+  status      DeliverableStatus @default(SUBMITTED)
+  submittedAt DateTime          @default(now())
+}
+
+model RevisionRequest {
+  id            String         @id @default(uuid())
+  projectId     String
+  project       Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  deliverableId String?
+  requestedBy   String
+  feedback      String
+  status        RevisionStatus @default(OPEN)
+  createdAt     DateTime       @default(now())
+}
+
+model VendorProfile {
+  id                String         @id @default(uuid())
+  personId          String         @unique
+  person            Person         @relation(fields: [personId], references: [id], onDelete: Cascade)
+  skills            String[]       @default([])
+  maxCapacity       Int            @default(3)
+  rating            Float          @default(5.0)
+  completedProjects Int            @default(0)
+  ndaSigned         Boolean        @default(false)
+  ndaSignedAt       DateTime?
+  contractUrl       String?
+  createdAt         DateTime       @default(now())
+  payouts           VendorPayout[]
+}
+
+model VendorPayout {
+  id          String        @id @default(uuid())
+  vendorId    String
+  vendor      VendorProfile @relation(fields: [vendorId], references: [id])
+  projectId   String
+  project     Project       @relation(fields: [projectId], references: [id])
+  milestoneId String?
+  amount      Float
+  status      PayoutStatus  @default(PENDING)
+  releasedAt  DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
 }
 
 model JobPosting {

@@ -13,6 +13,8 @@ import { PublicApiModule } from './modules/public-api/public-api.module';
 import { AiModule } from './modules/ai/ai.module';
 import { LeadsModule } from './modules/leads/leads.module';
 import { InboxModule } from './modules/inbox/inbox.module';
+import { ProjectsModule } from './modules/projects/projects.module';
+import { VendorsModule } from './modules/vendors/vendors.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -30,6 +32,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     AiModule,
     LeadsModule,
     InboxModule,
+    ProjectsModule,
+    VendorsModule,
   ],
   controllers: [AppController],
   providers: [
