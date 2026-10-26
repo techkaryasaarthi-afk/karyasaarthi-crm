@@ -4,6 +4,8 @@ import { PrismaService } from '../../database/prisma.service';
 import { PersonsService } from '../persons/persons.service';
 import { InteractionsService } from '../interactions/interactions.service';
 import { AiService } from '../ai/ai.service';
+import { LeadsService } from '../leads/leads.service';
+import { InboxService } from '../inbox/inbox.service';
 import { PublicEnquiryDto, PublicChatDto, PublicApplicationDto } from './dto/public-api.dto';
 
 @Injectable()
@@ -15,11 +17,13 @@ export class PublicApiService {
     private readonly personsService: PersonsService,
     private readonly interactionsService: InteractionsService,
     private readonly aiService: AiService,
+    private readonly leadsService: LeadsService,
+    private readonly inboxService: InboxService,
   ) {}
 
   /**
    * Ingests enquiries from karyasaarthi.com, karyasaarthi.in, and the Mobile App.
-   * Runs identity resolution, logs interaction, and calculates AI routing with Claude Haiku.
+   * Runs identity resolution, logs interaction, creates Kanban lead, and calculates AI routing with Claude Haiku.
    */
   async handleEnquiry(dto: PublicEnquiryDto) {
     if (!dto.email && !dto.phone) {
@@ -49,7 +53,12 @@ export class PublicApiService {
       channel: dto.surface,
       type: InteractionType.FORM,
       payload: {
-        sourceDomain: dto.surface === Surface.SITE_COM ? 'karyasaarthi.com' : dto.surface === Surface.SITE_IN ? 'karyasaarthi.in' : 'mobile_app',
+        sourceDomain:
+          dto.surface === Surface.SITE_COM
+            ? 'karyasaarthi.com'
+            : dto.surface === Surface.SITE_IN
+            ? 'karyasaarthi.in'
+            : 'mobile_app',
         serviceType: dto.serviceType || 'General Inquiry',
         message: dto.message,
         budget: dto.budget || 'Not specified',
@@ -58,7 +67,20 @@ export class PublicApiService {
       },
     });
 
-    this.logger.log(`📥 Ingested enquiry from ${dto.fullName} via ${dto.surface} (Person: ${person.id}, Score: ${aiAnalysis?.qualityScore || 'N/A'})`);
+    // 4. Automatically create Lead card on the shared Kanban Board
+    const lead = await this.leadsService.create({
+      personId: person.id,
+      title: `${dto.serviceType || 'Project Inquiry'} - ${dto.fullName}`,
+      score: aiAnalysis?.qualityScore,
+      urgency: aiAnalysis?.urgency as any,
+      serviceType: dto.serviceType,
+      sourceSurface: dto.surface,
+      notes: `Inquiry message: ${dto.message}\nBudget: ${dto.budget || 'Not specified'}\nRationale: ${aiAnalysis?.rationale || 'N/A'}`,
+    });
+
+    this.logger.log(
+      `📥 Ingested enquiry from ${dto.fullName} via ${dto.surface} (Person: ${person.id}, Lead: ${lead.id}, Score: ${aiAnalysis?.qualityScore || 'N/A'})`,
+    );
 
     return {
       success: true,
@@ -66,6 +88,7 @@ export class PublicApiService {
       data: {
         personId: person.id,
         interactionId: interaction.id,
+        leadId: lead.id,
         routing: {
           urgency: aiAnalysis?.urgency || 'MEDIUM',
           department: aiAnalysis?.recommendedDepartment || 'General Sales',
@@ -76,6 +99,7 @@ export class PublicApiService {
 
   /**
    * Ingests live chat starter messages from web widgets & mobile app.
+   * Auto-connects to the Omnichannel Inbox conversation thread.
    */
   async handleChatMessage(dto: PublicChatDto) {
     const displayName = dto.fullName?.trim() || 'Visitor from ' + dto.channel;
@@ -98,10 +122,18 @@ export class PublicApiService {
       },
     });
 
+    // Ingest into Omnichannel Inbox Conversation Thread
+    const conversation = await this.inboxService.createConversation({
+      personId: person.id,
+      channel: dto.channel,
+      initialMessage: dto.message,
+    });
+
     return {
       success: true,
       personId: person.id,
       interactionId: interaction.id,
+      conversationId: conversation.id,
     };
   }
 

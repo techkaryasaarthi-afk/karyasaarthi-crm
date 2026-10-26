@@ -64,7 +64,7 @@ export class QueryInteractionDto {
   @IsInt()
   @Min(1)
   @IsOptional()
-  page?: number = 1;
+  page?: number;
 
   @ApiPropertyOptional({ description: 'Items per page', default: 20 })
   @Type(() => Number)
@@ -72,5 +72,5 @@ export class QueryInteractionDto {
   @Min(1)
   @Max(100)
   @IsOptional()
-  limit?: number = 20;
+  limit?: number;
 }
