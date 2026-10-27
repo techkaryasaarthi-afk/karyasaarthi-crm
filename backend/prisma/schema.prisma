@@ -135,6 +135,8 @@ model Person {
   leads            Lead[]
   conversations    Conversation[]
   vendorProfile    VendorProfile?
+  campusAmbassador CampusAmbassador?
+  ambassadorReferrals AmbassadorReferral[] @relation("ReferredPerson")
 }
 
 model Staff {
@@ -335,20 +337,75 @@ model VendorPayout {
 model JobPosting {
   id           String        @id @default(uuid())
   title        String
+  department   String        @default("General")
+  location     String        @default("Remote")
+  type         String        @default("FULL_TIME")
+  experience   String?
+  salaryRange  String?
+  description  String?
+  requirements String[]      @default([])
   open         Boolean       @default(true)
+  createdAt    DateTime      @default(now())
   applications Application[]
+
+  @@index([department, open])
 }
 
 model Application {
-  id         String     @id @default(uuid())
-  personId   String
-  person     Person     @relation(fields: [personId], references: [id])
-  roleId     String
-  role       JobPosting @relation(fields: [roleId], references: [id])
-  stage      AppStage   @default(APPLIED)
-  resumeUrl  String?
-  reviewerId String?
-  reviewer   Staff?     @relation(fields: [reviewerId], references: [id])
+  id                   String     @id @default(uuid())
+  personId             String
+  person               Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+  roleId               String
+  role                 JobPosting @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  stage                AppStage   @default(APPLIED)
+  resumeUrl            String?
+  portfolioUrl         String?
+  yearsOfExperience    Float?
+  skills               String[]   @default([])
+  aiMatchScore         Int?
+  aiEvaluation         Json?
+  interviewNotes       String?
+  interviewScheduledAt DateTime?
+  offerAmount          Float?
+  referralCode         String?
+  reviewerId           String?
+  reviewer             Staff?     @relation(fields: [reviewerId], references: [id])
+  appliedAt            DateTime   @default(now())
+  updatedAt            DateTime   @default(now()) @updatedAt
+
+  @@index([stage, roleId])
+}
+
+model CampusAmbassador {
+  id                    String               @id @default(uuid())
+  personId              String               @unique
+  person                Person               @relation(fields: [personId], references: [id], onDelete: Cascade)
+  college               String
+  graduationYear        Int?
+  referralCode          String               @unique
+  totalReferrals        Int                  @default(0)
+  successfulConversions Int                  @default(0)
+  commissionEarned      Float                @default(0.0)
+  payoutStatus          PayoutStatus         @default(PENDING)
+  status                String               @default("ACTIVE")
+  createdAt             DateTime             @default(now())
+  referrals             AmbassadorReferral[]
+
+  @@index([referralCode, status])
+}
+
+model AmbassadorReferral {
+  id               String           @id @default(uuid())
+  ambassadorId     String
+  ambassador       CampusAmbassador @relation(fields: [ambassadorId], references: [id], onDelete: Cascade)
+  referredPersonId String
+  referredPerson   Person           @relation("ReferredPerson", fields: [referredPersonId], references: [id], onDelete: Cascade)
+  type             String           @default("LEAD")
+  status           String           @default("ATTRIBUTED")
+  rewardAmount     Float            @default(0.0)
+  createdAt        DateTime         @default(now())
+
+  @@index([ambassadorId, referredPersonId])
 }
 
 model AuditLog {
@@ -360,3 +417,4 @@ model AuditLog {
   diff     Json?
   at       DateTime @default(now())
 }
+
