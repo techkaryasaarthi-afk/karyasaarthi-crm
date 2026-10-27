@@ -15,6 +15,8 @@ import { LeadsModule } from './modules/leads/leads.module';
 import { InboxModule } from './modules/inbox/inbox.module';
 import { ProjectsModule } from './modules/projects/projects.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
+import { CareersModule } from './modules/careers/careers.module';
+import { AmbassadorsModule } from './modules/ambassadors/ambassadors.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -34,6 +36,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     InboxModule,
     ProjectsModule,
     VendorsModule,
+    CareersModule,
+    AmbassadorsModule,
   ],
   controllers: [AppController],
   providers: [
