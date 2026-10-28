@@ -34,3 +34,7 @@ yarn-error.log*
 *.pem
 .idea/
 .vscode/
+
+# Uploads
+uploads/*
+!uploads/.gitkeep

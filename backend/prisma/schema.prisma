@@ -179,6 +179,7 @@ model Staff {
   leadTasks             LeadTask[]
   assignedConversations Conversation[]
   messagesSent          ChatMessage[]
+  blogPosts             BlogPost[]
 }
 
 model Interaction {
@@ -294,6 +295,7 @@ model Project {
   revisions     RevisionRequest[]
   payouts       VendorPayout[]
   invoices      Invoice[]           @relation("ProjectInvoices")
+  files         FileRecord[]
 
   @@index([stage, status])
 }
@@ -517,5 +519,76 @@ model AutomationRule {
   createdAt   DateTime  @default(now())
 }
 
+model BlogPost {
+  id          String    @id @default(uuid())
+  title       String
+  slug        String    @unique
+  excerpt     String?
+  content     String
+  coverImage  String?
+  tags        String[]  @default([])
+  surface     Surface   @default(SITE_COM)
+  published   Boolean   @default(false)
+  publishedAt DateTime?
+  authorId    String?
+  author      Staff?    @relation(fields: [authorId], references: [id])
+  viewsCount  Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
 
+  @@index([slug])
+  @@index([published, surface])
+}
 
+model CaseStudy {
+  id             String   @id @default(uuid())
+  title          String
+  slug           String   @unique
+  clientName     String
+  serviceType    String
+  description    String
+  outcomeMetrics Json     @default("{}")
+  coverImage     String?
+  tags           String[] @default([])
+  published      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@index([slug])
+  @@index([published])
+}
+
+model Testimonial {
+  id         String   @id @default(uuid())
+  clientName String
+  clientRole String?
+  company    String?
+  avatarUrl  String?
+  rating     Int      @default(5)
+  reviewText String
+  verified   Boolean  @default(true)
+  surface    Surface  @default(SITE_COM)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@index([surface, verified])
+}
+
+model FileRecord {
+  id            String   @id @default(uuid())
+  originalName  String
+  filename      String   @unique
+  mimeType      String
+  size          Int
+  pathUrl       String
+  storageType   String   @default("LOCAL")
+  uploadedBy    String?
+  projectId     String?
+  project       Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  deliverableId String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+
+  @@index([filename])
+  @@index([projectId])
+}
