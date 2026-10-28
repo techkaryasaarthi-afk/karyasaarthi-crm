@@ -74,6 +74,31 @@ enum PayoutStatus {
   HELD
 }
 
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum PaymentMethod {
+  RAZORPAY
+  BANK_TRANSFER
+  UPI
+  STRIPE
+  CASH
+}
+
+enum NotificationType {
+  SLA_BREACH
+  LEAD_ASSIGNED
+  PAYMENT_RECEIVED
+  MILESTONE_COMPLETED
+  REVISION_REQUESTED
+  SYSTEM_ALERT
+}
+
 enum AppStage {
   APPLIED
   SCREENED
@@ -110,6 +135,7 @@ enum ConversationStatus {
   PENDING
   RESOLVED
   SNOOZED
+  ESCALATED
 }
 
 enum SenderType {
@@ -137,6 +163,7 @@ model Person {
   vendorProfile    VendorProfile?
   campusAmbassador CampusAmbassador?
   ambassadorReferrals AmbassadorReferral[] @relation("ReferredPerson")
+  invoices         Invoice[]       @relation("ClientInvoices")
 }
 
 model Staff {
@@ -266,6 +293,7 @@ model Project {
   deliverables  ProjectDeliverable[]
   revisions     RevisionRequest[]
   payouts       VendorPayout[]
+  invoices      Invoice[]           @relation("ProjectInvoices")
 
   @@index([stage, status])
 }
@@ -416,5 +444,78 @@ model AuditLog {
   entityId String
   diff     Json?
   at       DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([actorId, at])
 }
+
+model Invoice {
+  id             String        @id @default(uuid())
+  invoiceNumber  String        @unique
+  clientId       String
+  client         Person        @relation("ClientInvoices", fields: [clientId], references: [id])
+  projectId      String?
+  project        Project?      @relation("ProjectInvoices", fields: [projectId], references: [id])
+  milestoneId    String?
+  title          String
+  description    String?
+  subtotal       Float
+  taxAmount      Float         @default(0.0)
+  totalAmount    Float
+  currency       String        @default("INR")
+  status         InvoiceStatus @default(PENDING)
+  dueDate        DateTime?
+  paidAt         DateTime?
+  gatewayOrderId String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @default(now()) @updatedAt
+  payments       Payment[]
+
+  @@index([clientId, status])
+  @@index([projectId, status])
+}
+
+model Payment {
+  id               String        @id @default(uuid())
+  invoiceId        String
+  invoice          Invoice       @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  amount           Float
+  currency         String        @default("INR")
+  method           PaymentMethod @default(RAZORPAY)
+  transactionRef   String?
+  gatewayPaymentId String?
+  status           String        @default("SUCCESS")
+  capturedAt       DateTime      @default(now())
+  notes            String?
+
+  @@index([invoiceId, status])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  recipientId String           // Staff ID or Person ID
+  title       String
+  message     String
+  type        NotificationType @default(SYSTEM_ALERT)
+  read        Boolean          @default(false)
+  readAt      DateTime?
+  link        String?
+  metadata    Json             @default("{}")
+  createdAt   DateTime         @default(now())
+
+  @@index([recipientId, read])
+}
+
+model AutomationRule {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  triggerType String    // SLA_CHECK, STALE_LEADS, OVERDUE_INVOICES
+  enabled     Boolean   @default(true)
+  lastRunAt   DateTime?
+  config      Json      @default("{}")
+  createdAt   DateTime  @default(now())
+}
+
+
 

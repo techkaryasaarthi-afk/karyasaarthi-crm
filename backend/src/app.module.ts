@@ -17,6 +17,11 @@ import { ProjectsModule } from './modules/projects/projects.module';
 import { VendorsModule } from './modules/vendors/vendors.module';
 import { CareersModule } from './modules/careers/careers.module';
 import { AmbassadorsModule } from './modules/ambassadors/ambassadors.module';
+import { PaymentsModule } from './modules/payments/payments.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
+import { AuditModule } from './modules/audit/audit.module';
+import { AutomationModule } from './modules/automation/automation.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -38,6 +43,11 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     VendorsModule,
     CareersModule,
     AmbassadorsModule,
+    PaymentsModule,
+    AnalyticsModule,
+    NotificationsModule,
+    AuditModule,
+    AutomationModule,
   ],
   controllers: [AppController],
   providers: [
