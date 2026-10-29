@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, Logger } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger, Inject, forwardRef } from '@nestjs/common';
 import { Prisma, LeadStage, LeadUrgency, Role, PersonType } from '@prisma/client';
 import { PrismaService } from '../../database/prisma.service';
 import { AiService } from '../ai/ai.service';
+import { AdminControlService } from '../admin-control/admin-control.service';
 import {
   CreateLeadDto,
   UpdateLeadDto,
@@ -17,6 +18,8 @@ export class LeadsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly aiService: AiService,
+    @Inject(forwardRef(() => AdminControlService))
+    private readonly adminControlService: AdminControlService,
   ) {}
 
   /**
@@ -30,10 +33,29 @@ export class LeadsService {
       throw new NotFoundException(`Person with ID "${dto.personId}" does not exist`);
     }
 
-    // 1. Automatic Round-Robin Assignment if not provided
+    // 1. Pipeline Routing Rule Builder Evaluation (Blueprint 3.7)
     let assignedStaffId = dto.assignedStaffId;
     if (!assignedStaffId) {
-      assignedStaffId = await this.getRoundRobinStaff();
+      try {
+        const routingDecision = await this.adminControlService.evaluateLeadRouting({
+          sourceSurface: dto.sourceSurface,
+          serviceType: dto.serviceType,
+          estimatedValue: dto.estimatedValue,
+          title: dto.title,
+          notes: dto.notes,
+        });
+
+        if (routingDecision.assignedStaffId) {
+          assignedStaffId = routingDecision.assignedStaffId;
+          this.logger.log(`Lead "${dto.title}" auto-assigned via routing rule: ${routingDecision.reason}`);
+        } else {
+          // Fallback to Automatic Round-Robin Assignment
+          assignedStaffId = await this.getRoundRobinStaff();
+        }
+      } catch (err: any) {
+        this.logger.warn(`Routing rule evaluation fallback: ${err.message}`);
+        assignedStaffId = await this.getRoundRobinStaff();
+      }
     }
 
     // 2. Cost-Effective AI Lead Scoring if score is not manually passed

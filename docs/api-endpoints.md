@@ -1,3 +1,30 @@
 # API Endpoints
-- Public: /public/forms/enquiry, /public/chat/messages, /public/applications
-- Private: /auth/login, /persons, /inbox, /leads, /projects, /vendors, /careers, /analytics
+- Public:
+  - `/public/forms/enquiry`: Cross-surface project enquiries
+  - `/public/chat/messages`: Web widget & mobile app in-thread messages
+  - `/public/applications`: Job applications & resume CV ingestion
+  - `/public/careers/jobs`: Public active career listings
+  - `/admin-control/public/services`: Active service catalogue filtered by surface
+  - `/admin-control/public/feature-flags`: Active surface feature flags & configs
+  - `/admin-control/public/quote`: Dynamic price quote calculator with promotional rules
+- Private:
+  - `/auth/login`, `/auth/refresh`, `/auth/profile`: Staff authentication
+  - `/users-rbac/staff`: Role-based staff access management
+  - `/persons`: Unified person identity directory
+  - `/inbox`: Omnichannel inbox threads & live WebSocket gateway
+  - `/leads`: Kanban lead pipeline & task scheduler
+  - `/projects`: Project execution, milestones, deliverables & revisions
+  - `/vendors`: Expert directory, skills & workload capacity
+  - `/careers`: Recruitment ATS candidate pipeline & Claude Sonnet scoring
+  - `/ambassadors`: Campus ambassador referrals & rewards ledger
+  - `/payments`: Razorpay invoices & transaction tracking
+  - `/analytics`: Executive business metrics & funnel reporting
+  - `/notifications`: Staff notification center & SLA alerts
+  - `/audit`: Full entity audit trails
+  - `/automation`: 15-minute SLA escalation, stale lead tasks & invoice monitor
+  - `/content`: CMS for blogs, case studies, and client testimonials
+  - `/files`: File storage & deliverable asset management
+  - `/admin-control/services`: Service catalogue & deliverables CRUD
+  - `/admin-control/pricing-rules`: Dynamic pricing & promotional rules
+  - `/admin-control/feature-flags`: Surface-scoped feature flags
+  - `/admin-control/routing-rules`: Prioritized pipeline lead auto-routing rules

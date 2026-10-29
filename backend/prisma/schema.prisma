@@ -145,6 +145,20 @@ enum SenderType {
   SYSTEM
 }
 
+enum PricingModel {
+  FIXED
+  HOURLY
+  MILESTONE
+  CUSTOM
+}
+
+enum PricingConditionType {
+  MIN_BUDGET
+  SURFACE_PROMO
+  VOLUME_DISCOUNT
+  SPECIAL_SURFACE
+}
+
 model Person {
   id               String          @id @default(uuid())
   fullName         String
@@ -180,6 +194,7 @@ model Staff {
   assignedConversations Conversation[]
   messagesSent          ChatMessage[]
   blogPosts             BlogPost[]
+  routingRules          RoutingRule[]  @relation("RoutingRuleStaff")
 }
 
 model Interaction {
@@ -592,3 +607,81 @@ model FileRecord {
   @@index([filename])
   @@index([projectId])
 }
+
+model ServiceItem {
+  id           String        @id @default(uuid())
+  title        String
+  slug         String        @unique
+  description  String
+  category     String
+  basePrice    Float
+  currency     String        @default("INR")
+  pricingModel PricingModel  @default(FIXED)
+  deliverables String[]      @default([])
+  surfaces     Surface[]     @default([SITE_COM, SITE_IN, APP])
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @default(now()) @updatedAt
+  pricingRules PricingRule[]
+
+  @@index([slug])
+  @@index([category, active])
+}
+
+model PricingRule {
+  id                 String               @id @default(uuid())
+  name               String
+  description        String?
+  serviceId          String?
+  service            ServiceItem?         @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  conditionType      PricingConditionType @default(MIN_BUDGET)
+  discountPercentage Float?
+  markupPercentage   Float?
+  minBudget          Float?
+  targetSurface      Surface?
+  validFrom          DateTime?
+  validUntil         DateTime?
+  active             Boolean              @default(true)
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @default(now()) @updatedAt
+
+  @@index([serviceId, active])
+  @@index([targetSurface, active])
+}
+
+model FeatureFlag {
+  id                String   @id @default(uuid())
+  key               String   @unique
+  name              String
+  description       String?
+  enabled           Boolean  @default(true)
+  surface           Surface?
+  rolloutPercentage Int      @default(100)
+  config            Json     @default("{}")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @default(now()) @updatedAt
+
+  @@index([key])
+  @@index([surface, enabled])
+}
+
+model RoutingRule {
+  id                String    @id @default(uuid())
+  name              String
+  description       String?
+  priority          Int       @default(0)
+  sourceSurface     Surface?
+  serviceCategory   String?
+  minEstimatedValue Float?
+  keywordMatch      String[]  @default([])
+  assignedStaffId   String?
+  assignedStaff     Staff?    @relation("RoutingRuleStaff", fields: [assignedStaffId], references: [id], onDelete: SetNull)
+  targetRole        Role?
+  active            Boolean   @default(true)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @default(now()) @updatedAt
+
+  @@index([priority, active])
+  @@index([sourceSurface, active])
+}
+
