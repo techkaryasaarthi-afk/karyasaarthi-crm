@@ -1,15 +1,18 @@
 # API Endpoints
-- Public:
-  - `/public/forms/enquiry`: Cross-surface project enquiries
-  - `/public/chat/messages`: Web widget & mobile app in-thread messages
-  - `/public/applications`: Job applications & resume CV ingestion
+- Public (Protected with Anti-Abuse Rate Limiting):
+  - `/public/forms/enquiry`: Cross-surface project enquiries (Rate limit: 5 req/min)
+  - `/public/chat/messages`: Web widget & mobile app in-thread messages (Rate limit: 20 req/min)
+  - `/public/applications`: Job applications & resume CV ingestion (Rate limit: 5 req/min)
   - `/public/careers/jobs`: Public active career listings
   - `/admin-control/public/services`: Active service catalogue filtered by surface
   - `/admin-control/public/feature-flags`: Active surface feature flags & configs
   - `/admin-control/public/quote`: Dynamic price quote calculator with promotional rules
 - Private:
-  - `/auth/login`, `/auth/refresh`, `/auth/profile`: Staff authentication
+  - `/auth/login`: Staff authentication with brute-force rate limiting (5 attempts/15 min)
+  - `/auth/refresh`, `/auth/profile`: Session management
   - `/users-rbac/staff`: Role-based staff access management
+  - `/search`: Global multi-entity search across leads, projects, applications, persons, services, invoices, and staff
+  - `/search/quick`: Ultra-fast autocomplete / quick-jump omnibar search (`Cmd + K`)
   - `/persons`: Unified person identity directory
   - `/inbox`: Omnichannel inbox threads & live WebSocket gateway
   - `/leads`: Kanban lead pipeline & task scheduler
