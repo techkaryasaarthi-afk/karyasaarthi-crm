@@ -105,3 +105,4 @@ export interface GlobalSearchResponse {
   };
   flatResults: SearchResultItem[];
 }
+

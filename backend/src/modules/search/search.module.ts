@@ -10,3 +10,4 @@ import { PrismaModule } from '../../database/prisma.module';
   exports: [SearchService],
 })
 export class SearchModule {}
+
