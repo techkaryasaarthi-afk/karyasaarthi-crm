@@ -24,6 +24,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AutomationModule } from './modules/automation/automation.module';
 import { ContentModule } from './modules/content/content.module';
 import { FilesModule } from './modules/files/files.module';
+import { AdminControlModule } from './modules/admin-control/admin-control.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 
 @Module({
@@ -52,6 +53,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     AutomationModule,
     ContentModule,
     FilesModule,
+    AdminControlModule,
   ],
   controllers: [AppController],
   providers: [
