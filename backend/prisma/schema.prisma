@@ -159,6 +159,22 @@ enum PricingConditionType {
   SPECIAL_SURFACE
 }
 
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  PUSH
+  SMS
+}
+
+enum CommsDeliveryStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  OPTED_OUT
+}
+
 model Person {
   id               String          @id @default(uuid())
   fullName         String
@@ -684,4 +700,24 @@ model RoutingRule {
   @@index([priority, active])
   @@index([sourceSurface, active])
 }
+
+model CommsLog {
+  id             String              @id @default(uuid())
+  recipientId    String?
+  recipientEmail String?
+  recipientPhone String?
+  channel        NotificationChannel
+  template       String?
+  subject        String?
+  content        String
+  status         CommsDeliveryStatus @default(SENT)
+  externalId     String?
+  errorMessage   String?
+  metadata       Json                @default("{}")
+  sentAt         DateTime            @default(now())
+
+  @@index([recipientId, channel])
+  @@index([status, sentAt])
+}
+
 

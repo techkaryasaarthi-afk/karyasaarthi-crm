@@ -35,3 +35,4 @@ export class SearchController {
     return this.searchService.quickSearch(query);
   }
 }
+

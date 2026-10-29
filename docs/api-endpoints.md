@@ -23,6 +23,11 @@
   - `/payments`: Razorpay invoices & transaction tracking
   - `/analytics`: Executive business metrics & funnel reporting
   - `/notifications`: Staff notification center & SLA alerts
+  - `/notifications/comms/dispatch`: Multi-channel broadcast (Email, WhatsApp, Push, SMS) with GDPR consent filtering
+  - `/notifications/comms/email`: Direct transactional email
+  - `/notifications/comms/whatsapp`: Direct WhatsApp template notification
+  - `/notifications/comms/push`: Direct in-app & mobile app push notification
+  - `/notifications/comms/logs`: Outgoing transactional comms audit trail & delivery tracking
   - `/audit`: Full entity audit trails
   - `/automation`: 15-minute SLA escalation, stale lead tasks & invoice monitor
   - `/content`: CMS for blogs, case studies, and client testimonials
