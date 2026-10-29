@@ -25,7 +25,9 @@ import { AutomationModule } from './modules/automation/automation.module';
 import { ContentModule } from './modules/content/content.module';
 import { FilesModule } from './modules/files/files.module';
 import { AdminControlModule } from './modules/admin-control/admin-control.module';
+import { SearchModule } from './modules/search/search.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
+import { RateLimitGuard } from './common/guards/rate-limit.guard';
 
 @Module({
   imports: [
@@ -54,10 +56,15 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     ContentModule,
     FilesModule,
     AdminControlModule,
+    SearchModule,
   ],
   controllers: [AppController],
   providers: [
     AppService,
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,

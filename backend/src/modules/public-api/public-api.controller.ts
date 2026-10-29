@@ -3,6 +3,7 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { PublicApiService } from './public-api.service';
 import { PublicEnquiryDto, PublicChatDto, PublicApplicationDto } from './dto/public-api.dto';
 import { Public } from '../../common/decorators/public.decorator';
+import { RateLimit } from '../../common/decorators/rate-limit.decorator';
 
 @ApiTags('Public Multi-Surface Ingestion')
 @Controller('public')
@@ -10,6 +11,7 @@ export class PublicApiController {
   constructor(private readonly publicApiService: PublicApiService) {}
 
   @Public()
+  @RateLimit({ ttlSeconds: 60, maxRequests: 5, keyPrefix: 'public_enquiry' })
   @Post('forms/enquiry')
   @ApiOperation({
     summary: 'Submit enquiry form (karyasaarthi.com & karyasaarthi.in)',
@@ -21,6 +23,7 @@ export class PublicApiController {
   }
 
   @Public()
+  @RateLimit({ ttlSeconds: 60, maxRequests: 20, keyPrefix: 'public_chat' })
   @Post('chat/messages')
   @ApiOperation({
     summary: 'Send chat message from website widget or mobile app',
@@ -32,6 +35,7 @@ export class PublicApiController {
   }
 
   @Public()
+  @RateLimit({ ttlSeconds: 60, maxRequests: 5, keyPrefix: 'public_application' })
   @Post('applications')
   @ApiOperation({
     summary: 'Submit job application (career.karyasaarthi.com)',
