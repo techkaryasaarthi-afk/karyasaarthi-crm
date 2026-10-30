@@ -30,7 +30,21 @@ export class AutomationController {
     if (dto.triggerType === 'OVERDUE_INVOICES') {
       return this.automationService.checkOverdueInvoices();
     }
+    if (dto.triggerType === 'DATA_RETENTION') {
+      return this.automationService.runDataRetentionPolicy();
+    }
     return this.automationService.runAllAutomations();
+  }
+
+  @Post('retention/run')
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Trigger automated data retention policy (GDPR/DPDP)',
+    description: 'Purges applicant CV assets older than 180 days per company retention rules',
+  })
+  @ApiResponse({ status: 200, description: 'Data retention run summary' })
+  runRetention() {
+    return this.automationService.runDataRetentionPolicy();
   }
 
   @Get('status')

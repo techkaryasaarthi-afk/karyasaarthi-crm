@@ -8,11 +8,12 @@ import {
   Delete,
   Query,
   UseGuards,
+  Req,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { Role } from '@prisma/client';
 import { PersonsService } from './persons.service';
-import { CreatePersonDto, UpdatePersonDto, QueryPersonDto } from './dto/person.dto';
+import { CreatePersonDto, UpdatePersonDto, QueryPersonDto, ErasePersonDataDto } from './dto/person.dto';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { RolesGuard } from '../../common/guards/roles.guard';
 
@@ -63,4 +64,31 @@ export class PersonsController {
   remove(@Param('id') id: string) {
     return this.personsService.remove(id);
   }
+
+  @Post(':id/erase-data')
+  @Roles(Role.ADMIN)
+  @ApiOperation({
+    summary: 'Right to be Forgotten / Data Erasure (GDPR & DPDP Compliance)',
+    description: 'Anonymizes PII across person profile, applications, and comms while preserving financial invoices',
+  })
+  @ApiResponse({ status: 200, description: 'Person data securely erased and anonymized' })
+  eraseData(
+    @Param('id') id: string,
+    @Body() dto: ErasePersonDataDto,
+    @Req() req: any,
+  ) {
+    return this.personsService.erasePersonData(id, dto.reason, req.user?.id);
+  }
+
+  @Get(':id/export-data')
+  @Roles(Role.ADMIN, Role.MANAGER)
+  @ApiOperation({
+    summary: 'Right to Data Portability (GDPR & DPDP Compliance)',
+    description: 'Exports portable JSON dossier of all interactions, applications, projects, and records',
+  })
+  @ApiResponse({ status: 200, description: 'Complete portable customer dossier' })
+  exportData(@Param('id') id: string) {
+    return this.personsService.exportPersonData(id);
+  }
 }
+

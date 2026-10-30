@@ -5,9 +5,10 @@ export class TriggerAutomationDto {
   @ApiPropertyOptional({
     description: 'Specific automation trigger type or ALL',
     default: 'ALL',
-    enum: ['ALL', 'SLA_CHECK', 'STALE_LEADS', 'OVERDUE_INVOICES'],
+    enum: ['ALL', 'SLA_CHECK', 'STALE_LEADS', 'OVERDUE_INVOICES', 'DATA_RETENTION'],
   })
   @IsOptional()
   @IsString()
   triggerType?: string;
 }
+

@@ -1,5 +1,7 @@
 # API Endpoints
 - Public (Protected with Anti-Abuse Rate Limiting):
+  - `/`: API root and surface support information
+  - `/health`: Deep production system health check (uptime, PostgreSQL latency, memory metrics, core entity counts)
   - `/public/forms/enquiry`: Cross-surface project enquiries (Rate limit: 5 req/min)
   - `/public/chat/messages`: Web widget & mobile app in-thread messages (Rate limit: 20 req/min)
   - `/public/applications`: Job applications & resume CV ingestion (Rate limit: 5 req/min)
@@ -8,12 +10,15 @@
   - `/admin-control/public/feature-flags`: Active surface feature flags & configs
   - `/admin-control/public/quote`: Dynamic price quote calculator with promotional rules
 - Private:
+  - `/health/backup-drill`: Automated database snapshot & restore verification drill per go-live checklist (Admin only)
   - `/auth/login`: Staff authentication with brute-force rate limiting (5 attempts/15 min)
   - `/auth/refresh`, `/auth/profile`: Session management
   - `/users-rbac/staff`: Role-based staff access management
   - `/search`: Global multi-entity search across leads, projects, applications, persons, services, invoices, and staff
   - `/search/quick`: Ultra-fast autocomplete / quick-jump omnibar search (`Cmd + K`)
   - `/persons`: Unified person identity directory
+  - `/persons/:id/erase-data`: Right-to-be-Forgotten / PII erasure (GDPR & DPDP compliance)
+  - `/persons/:id/export-data`: Right to Data Portability (full portable customer dossier)
   - `/inbox`: Omnichannel inbox threads & live WebSocket gateway
   - `/leads`: Kanban lead pipeline & task scheduler
   - `/projects`: Project execution, milestones, deliverables & revisions
@@ -30,6 +35,7 @@
   - `/notifications/comms/logs`: Outgoing transactional comms audit trail & delivery tracking
   - `/audit`: Full entity audit trails
   - `/automation`: 15-minute SLA escalation, stale lead tasks & invoice monitor
+  - `/automation/retention/run`: Automated data retention policy runner (candidate CV purge > 180 days)
   - `/content`: CMS for blogs, case studies, and client testimonials
   - `/files`: File storage & deliverable asset management
   - `/admin-control/services`: Service catalogue & deliverables CRUD

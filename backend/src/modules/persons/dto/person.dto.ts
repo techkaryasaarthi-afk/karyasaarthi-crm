@@ -103,3 +103,14 @@ export class QueryPersonDto {
   @IsOptional()
   limit?: number;
 }
+
+export class ErasePersonDataDto {
+  @ApiPropertyOptional({
+    example: 'Customer requested data deletion under GDPR / DPDP',
+    description: 'Reason for erasure',
+  })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+}
+
