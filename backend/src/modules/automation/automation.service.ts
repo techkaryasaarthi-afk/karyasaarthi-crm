@@ -186,15 +186,61 @@ export class AutomationService {
   }
 
   /**
+   * Rule 4: Data Retention & Privacy Compliance Engine (Blueprint Section 5)
+   * Enforces retention periods:
+   * 1. Purges applicant CV assets older than applicantRetentionDays (default 180 days).
+   */
+  async runDataRetentionPolicy(options?: { applicantRetentionDays?: number }) {
+    const applicantDays = options?.applicantRetentionDays || 180;
+    const applicantThreshold = new Date(Date.now() - applicantDays * 24 * 60 * 60 * 1000);
+
+    const expiredApps = await this.prisma.application.findMany({
+      where: {
+        appliedAt: { lt: applicantThreshold },
+        resumeUrl: { not: null },
+      },
+      select: { id: true, personId: true },
+    });
+
+    if (expiredApps.length > 0) {
+      await this.prisma.application.updateMany({
+        where: { id: { in: expiredApps.map((a) => a.id) } },
+        data: {
+          resumeUrl: null,
+          portfolioUrl: null,
+          interviewNotes: '[PURGED PER RETENTION POLICY]',
+        },
+      });
+
+      await this.auditService.log({
+        actorId: 'SYSTEM_DATA_RETENTION',
+        action: 'APPLICANT_DATA_RETENTION_APPLIED',
+        entity: 'Application',
+        entityId: `${expiredApps.length}_records`,
+        diff: { expiredCount: expiredApps.length, applicantDays },
+      });
+    }
+
+    this.logger.log(`Data Retention Engine: Purged CV assets for ${expiredApps.length} application(s) older than ${applicantDays} days`);
+
+    return {
+      expiredApplicationsPurged: expiredApps.length,
+      applicantRetentionDays: applicantDays,
+      executedAt: new Date(),
+    };
+  }
+
+  /**
    * Master execution cycle running all automated rules.
    */
   async runAllAutomations() {
     this.logger.log('Executing automated CRM maintenance cycle...');
 
-    const [slaResult, leadsResult, invoiceResult] = await Promise.all([
+    const [slaResult, leadsResult, invoiceResult, retentionResult] = await Promise.all([
       this.escalateSlaBreaches(),
       this.checkStaleLeads(48),
       this.checkOverdueInvoices(),
+      this.runDataRetentionPolicy({ applicantRetentionDays: 180 }),
     ]);
 
     // Record / Update AutomationRule lastRunAt
@@ -206,7 +252,7 @@ export class AutomationService {
           id: 'cron-master-cycle',
           name: 'Master Automation Cycle',
           triggerType: 'ALL',
-          description: 'Runs SLA auto-escalation, stale lead reminders, and invoice overdue monitoring.',
+          description: 'Runs SLA auto-escalation, stale lead reminders, invoice overdue monitoring, and data retention.',
           lastRunAt: new Date(),
         },
       });
@@ -221,6 +267,7 @@ export class AutomationService {
         slaEscalatedCount: slaResult.count,
         staleLeadsRemindedCount: leadsResult.count,
         overdueInvoicesCount: invoiceResult.count,
+        expiredApplicationsPurged: retentionResult.expiredApplicationsPurged,
       },
     };
   }

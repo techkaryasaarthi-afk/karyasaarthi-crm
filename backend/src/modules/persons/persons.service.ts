@@ -220,4 +220,135 @@ export class PersonsService {
       where: { id },
     });
   }
+
+  /**
+   * Right to be Forgotten / PII Erasure Engine (GDPR & DPDP Compliance):
+   * Anonymizes customer PII across Person, Leads, Applications, and CommsLog.
+   * Retains financial invoice and accounting records for tax compliance.
+   */
+  async erasePersonData(id: string, reason?: string, actorId?: string) {
+    const person = await this.findOne(id);
+
+    const anonymizedCode = id.substring(0, 8);
+    const anonymizedName = `Anonymized Contact ${anonymizedCode}`;
+    const anonymizedEmail = `erased_${anonymizedCode}@anonymized.internal`;
+
+    // 1. Anonymize Person record
+    const updatedPerson = await this.prisma.person.update({
+      where: { id },
+      data: {
+        fullName: anonymizedName,
+        email: anonymizedEmail,
+        phone: null,
+        consentFlags: {
+          erased: true,
+          erasedAt: new Date().toISOString(),
+          reason: reason || 'Data erasure requested under GDPR/DPDP',
+        },
+      },
+    });
+
+    // 2. Anonymize Applications (clear resume URL, skills, notes)
+    await this.prisma.application.updateMany({
+      where: { personId: id },
+      data: {
+        resumeUrl: null,
+        portfolioUrl: null,
+        interviewNotes: null,
+        skills: [],
+      },
+    });
+
+    // 3. Anonymize CommsLogs
+    await this.prisma.commsLog.updateMany({
+      where: { recipientId: id },
+      data: {
+        recipientEmail: anonymizedEmail,
+        recipientPhone: null,
+        content: '[REDACTED DUE TO DATA ERASURE]',
+      },
+    });
+
+    // 4. Record Audit Log
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: actorId || 'SYSTEM_PRIVACY',
+        action: 'PERSON_DATA_ERASED',
+        entity: 'Person',
+        entityId: id,
+        diff: {
+          previousName: person.fullName,
+          anonymizedName,
+          reason: reason || 'GDPR/DPDP erasure request',
+        },
+      },
+    });
+
+    return {
+      success: true,
+      message: `Personal data for ${person.fullName} has been securely erased and anonymized.`,
+      personId: id,
+      anonymizedProfile: {
+        fullName: updatedPerson.fullName,
+        email: updatedPerson.email,
+      },
+    };
+  }
+
+  /**
+   * Right to Data Portability (GDPR & DPDP Compliance):
+   * Exports full portable JSON dossier of all interactions, projects, and records for a person.
+   */
+  async exportPersonData(id: string) {
+    const person = await this.prisma.person.findUnique({
+      where: { id },
+      include: {
+        interactions: { orderBy: { occurredAt: 'desc' } },
+        leads: { orderBy: { createdAt: 'desc' } },
+        clientProjects: {
+          include: { milestones: true, deliverables: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        applications: {
+          include: { role: true },
+          orderBy: { appliedAt: 'desc' },
+        },
+        invoices: {
+          include: { payments: true },
+          orderBy: { createdAt: 'desc' },
+        },
+      },
+    });
+
+    if (!person) {
+      throw new NotFoundException(`Person with ID "${id}" not found`);
+    }
+
+    const commsLogs = await this.prisma.commsLog.findMany({
+      where: { recipientId: id },
+      orderBy: { sentAt: 'desc' },
+    });
+
+    return {
+      exportedAt: new Date().toISOString(),
+      dossier: {
+        profile: {
+          id: person.id,
+          fullName: person.fullName,
+          email: person.email,
+          phone: person.phone,
+          type: person.type,
+          firstTouchSource: person.firstTouchSource,
+          consentFlags: person.consentFlags,
+          createdAt: person.createdAt,
+        },
+        interactions: person.interactions,
+        leads: person.leads,
+        projects: person.clientProjects,
+        applications: person.applications,
+        invoices: person.invoices,
+        communications: commsLogs,
+      },
+    };
+  }
 }

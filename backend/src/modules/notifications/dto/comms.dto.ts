@@ -185,3 +185,4 @@ export class QueryCommsLogDto {
   @IsOptional()
   limit?: number;
 }
+

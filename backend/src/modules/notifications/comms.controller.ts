@@ -62,3 +62,4 @@ export class CommsController {
     return this.commsService.findAllCommsLogs(query);
   }
 }
+
